@@ -1,5 +1,7 @@
 # Read data from MOz and TON sites from Ameriflux downloads
 # Exploratory data for Proposal
+# Data variable descriptions for AMERIFLUX Subset porduct are at:
+# https://fluxnet.org/data/fluxnet2015-dataset/subset-data-product/
 
 # load libraries
 library(data.table)
@@ -11,7 +13,7 @@ library(dplyr)
 library(tidyr)
 
 # load data
-# Tonzi Ranch
+# Tonzi Ranch: https://fluxnet.org/doi/FLUXNET2015/US-Ton
 ton <- fread("./AMF_US-Ton_FLUXNET_SUBSET_2001-2021_3-5/AMF_US-Ton_FLUXNET_SUBSET_HH_2001-2021_3-5.csv",
                  header=TRUE,,na.strings=c("-9999", "NA","-"))
 
@@ -22,7 +24,7 @@ ton[,':='(datetime=ymd_hm(TIMESTAMP_END),
 # view columns
 colnames(ton)
 
-# Moflux
+# Moflux: https://ameriflux.lbl.gov/data/flux-data-products/fluxnet-publish/
 moz <- fread("./AMF_US-MOz_FLUXNET_SUBSET_2004-2019_3-5/AMF_US-MOz_FLUXNET_SUBSET_HH_2004-2019_3-5.csv",
              header=TRUE,,na.strings=c("-9999", "NA","-"))
 
