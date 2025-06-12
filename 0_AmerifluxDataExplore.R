@@ -71,3 +71,11 @@ ec %>%
   ggplot(., aes(doy, LE))+
   geom_line()+
   facet_grid(.~year)
+
+# graph timeseries of LE
+# no data in 2017 and 2018, graph only 2019 and 2020
+ec %>%
+  filter(year>2018 & year<2021) %>%
+  ggplot(., aes(doy, LE))+
+  geom_line()+
+  facet_grid(.~year)
