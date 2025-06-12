@@ -17,7 +17,7 @@ ec <- ec %>%
          year=year(datetime),
          month=month(datetime),
          doy=yday(datetime))
-
+ 
 
 # graph timeseries of NEE (FC) 
 ggplot(ec, aes(doy, FC))+
