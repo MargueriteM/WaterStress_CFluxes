@@ -24,6 +24,14 @@ ggplot(ec, aes(doy, FC))+
   geom_line()+
   facet_grid(.~year)
 
+# no data in 2017 and 2018, graph only after
+# graph timeseries of NEE (FC) 
+ec %>%
+  filter(year>2018 & year<2021) %>%
+  ggplot(., aes(datetime, FC))+
+  geom_line()+
+  facet_grid(.~year, scales="free_x")
+
 # graph jan of all years
 ec %>% 
   filter(month==1)%>%
@@ -54,4 +62,12 @@ ggplot(ec, aes(FC, NEE_PI))+
 ggplot(ec, aes(x=doy))+
   geom_line(aes(y=FC, color="FC"))+
   geom_line(aes(y=NEE_PI, color="NEE_PI"))+
+  facet_grid(.~year)
+
+# graph timeseries of LE
+# no data in 2017 and 2018, graph only after
+ec %>%
+  filter(year>2018) %>%
+  ggplot(., aes(doy, LE))+
+  geom_line()+
   facet_grid(.~year)
