@@ -7,5 +7,7 @@ REddyResults_xSR_20240323_587474645
 AMF_US-MOz_FLUXNET_SUBSET_2004-2019_3-5
 AMF_US-Ton_FLUXNET_SUBSET_2001-2021_3-5
 xSR_ReddyProc_Input_2023.txt
-AMF_US_MOz_Fluxnet_daily_2004_2019.csv 
+AMF_US_MOz_Fluxnet_daily_2004_2019.csv
 xSR_needs_partitioning.csv
+AMF_US-xNQ_BASE_HH_10-5.csv
+AMF_US-xNQ_BIF_20250430.xlsx
