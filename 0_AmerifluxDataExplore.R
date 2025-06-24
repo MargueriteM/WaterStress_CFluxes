@@ -80,3 +80,9 @@ ec %>%
   ggplot(., aes(doy, LE))+
   geom_line()+
   facet_grid(.~year)
+
+# create data with variables needed for ReddyProc partitioning
+ec2 = ec[c("year","doy", "datetime", "FC", "LE","H","SW_IN_1_1_1", "TA_1_1_1","TS_1_1_1", "RH", "VPD_PI", "USTAR")]
+
+# save file in ReddyProc format for online tool in R
+write.csv(ec2, "ONAQ_needs_partitioning.csv", row.names = FALSE)

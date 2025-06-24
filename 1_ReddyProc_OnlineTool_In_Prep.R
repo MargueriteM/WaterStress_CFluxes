@@ -4,9 +4,21 @@
 library(dplyr)
 library(ggplot2)
 
-reddy.in <- read.csv("xSR_needs_partitioning.csv", header=TRUE)
+setwd("C:/Users/mebeckage/OneDrive - The University of Texas at El Paso/Mauritz Lab - ONAQ_Data")
 
+reddy.in <- read.csv("ONAQ_needs_partitioning.csv", header=TRUE)
+
+# rename columns to ReddyProc parameters
+reddy.in <- rename(reddy.in, Year=year) 
+reddy.in <- rename(reddy.in, DoY=doy)
+reddy.in <- rename(reddy.in, Hour=datetime)
+reddy.in <- rename(reddy.in, NEE=FC)
+reddy.in <- rename(reddy.in, Rg=SW_IN_1_1_1)
+reddy.in <- rename(reddy.in, Tair=TA_1_1_1)
+reddy.in <- rename(reddy.in, Tsoil=TS_1_1_1)
 reddy.in <- rename(reddy.in, rH=RH)
+reddy.in <- rename(reddy.in, VPD=VPD_PI)
+reddy.in <- rename(reddy.in, Ustar=USTAR)
 
 # variables for ReddyProc input
 # Year	DoY	Hour	NEE	LE	H	Rg	Tair	Tsoil	rH	VPD	Ustar
