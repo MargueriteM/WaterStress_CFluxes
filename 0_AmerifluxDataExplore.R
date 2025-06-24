@@ -135,7 +135,7 @@ ec_time <- as.data.table(ec)
 ec_time[, date := as.Date(datetime)]
 
 # this checks if there are any days that have < 48 values
-#ec_time[, .N, by = .(date = as.Date(datetime))][N != 48]
+ec_time[, .N, by = .(date = as.Date(datetime))]#[N != 48]
 
 
 # filter dates so only includes days that have 48 values
