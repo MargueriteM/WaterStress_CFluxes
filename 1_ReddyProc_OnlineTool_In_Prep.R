@@ -52,7 +52,7 @@ saveyear <- function(data,startyear,endyear) {
     
     # save with columns in prescribed order
     write.table (data.final,
-                 file=paste("xSR_ReddyProc_Input_",i, ".txt",sep=""),
+                 file=paste("ONAQ_ReddyProc_Input_",i, ".txt",sep=""),
                  sep =' ', dec='.', na="-9999", row.names=FALSE)
   }} 
 
