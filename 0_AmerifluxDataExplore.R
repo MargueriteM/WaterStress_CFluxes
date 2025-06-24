@@ -128,18 +128,26 @@ ggplot(ec_ts_mean, aes(x=datetime, y = ts_mean)) + geom_line()
 ec <- left_join(ec, ec_ts_mean, by="datetime")
 
 # filter datetime into half hour segments, and display by the half hour (0.0,0.5, 1.0,1.5, etc)
-# create coopy of ec and covert to data.table 
+# create copy of ec and covert to data.table 
 ec_time <- as.data.table(ec)
 
-# create Hour column with half-hour resolution
-ec_time[, Hour := hour(datetime) + ifelse(minute(datetime) == 30, 0.5, 0)]
-ec_time[hour(datetime) == 0 & minute(datetime) == 0, Hour := 24.0]
+# Extract date part
+ec_time[, date := as.Date(datetime)]
 
-#ec_time[, Hour := seq(0.5, 24, by = 0.5), by = datetime]
-#ec_time[Hour == 24.0, Date := as.Date(datetime) - 1]
-#ec_time[is.na(Date), Date := as.Date(datetime)]  
+# this checks if there are any days that have < 48 values
+#ec_time[, .N, by = .(date = as.Date(datetime))][N != 48]
 
-# add new hour column to ec
+
+# filter dates so only includes days that have 48 values
+complete_dates <- ec_time[, .N, by = date][N == 48, date]
+ec_time <- ec_time[date %in% complete_dates]
+
+# Assign Hour values: 0.5 to 24.0 (48 steps per day)
+ec_time[, Hour := seq(0.5, 24, by = 0.5), by = date]
+
+
+
+# add new Hour column to ec
 ec <- merge(ec, ec_time[, .(datetime, Hour)], by = "datetime")
 
 # create data with variables needed for ReddyProc partitioning

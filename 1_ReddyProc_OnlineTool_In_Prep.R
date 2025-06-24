@@ -46,7 +46,7 @@ saveyear <- function(data,startyear,endyear) {
     data1 <- data1 %>% select(Year,DoY,Hour,NEE, LE, H, Rg, Tair, rH, VPD, Ustar)
     
     data.units <- c("-","-","-","umolm-2s-1", "Wm-2","Wm-2","Wm-2","degC","%","hPa","ms-1")
-    
+    t
     data.final <- rbind(data.units,data1)
     
     # save with columns in prescribed order
