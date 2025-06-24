@@ -2,6 +2,9 @@
 
 # load libraries
 library(tidyverse)
+library(bit64)
+library(data.table)
+library(lubridate)
 
 setwd("C:/Users/mebeckage/OneDrive - The University of Texas at El Paso/Mauritz Lab - ONAQ_Data")
 
@@ -19,6 +22,13 @@ ec <- ec %>%
          month=month(datetime),
          doy=yday(datetime))
  
+# create long format cdata
+ec_ts_long <- ec %>%
+  select(datetime,contains("TS"))%>%
+  pivot_longer( !datetime, 
+    names_to = "variable",
+    values_to = "value")%>%
+  separate_wider_position(variable, c(1,1,1,probe_id = 1, 1, probe_pos = 1),too_many="drop",cols_remove = FALSE)
 
 # graph timeseries of NEE (FC) 
 ggplot(ec, aes(doy, FC))+
@@ -81,8 +91,59 @@ ec %>%
   geom_line()+
   facet_grid(.~year)
 
+# graph SW In 
+ggplot(ec, aes(x=doy))+
+  geom_line(aes(y=SW_IN_1_1_1, color="SW_IN_1_1_1"))+
+  #geom_line(aes(y=SW_IN_1_1_2, color="SW_IN_1_1_2"))+
+  geom_line(aes(y=SW_IN_1_1_3, color="SW_IN_1_1_3"))+
+  facet_grid(.~year)
+
+# graph TA 
+ggplot(ec, aes(x=doy))+
+  geom_line(aes(y=TA_1_1_1, color="TA_1_1_1"))+
+  geom_line(aes(y=TA_1_1_2, color="TA_1_1_2"))+
+  facet_grid(.~year)
+
+ggplot(ec, aes(x=doy))+
+  geom_line(aes(y=TA_1_1_2, color="TA_1_1_2"))+
+ # geom_line(aes(y=TA_1_2_1, color="TA_1_2_1"))+
+  #geom_line(aes(y=TA_1_3_1, color="TA_1_3_1"))+
+  geom_line(aes(y=TA_1_4_1, color="TA_1_4_1"))+
+  facet_grid(.~year)
+
+# graph TS
+ggplot(ec_ts_long, aes(x=datetime, y=value, colour = probe_pos)) + 
+  geom_line() + 
+  facet_wrap(probe_id ~.)
+
+# calculate average for TS probes 1-4 across all depths
+ec_ts_mean <- ec_ts_long %>%
+  filter(probe_id < 5) %>%
+  group_by(datetime) %>%
+  summarise(ts_mean = mean(value, na.rm = TRUE))
+
+# graph ts_mean to check data
+ggplot(ec_ts_mean, aes(x=datetime, y = ts_mean)) + geom_line()
+
+ec <- left_join(ec, ec_ts_mean, by="datetime")
+
+# filter datetime into half hour segments, and display by the half hour (0.0,0.5, 1.0,1.5, etc)
+# create coopy of ec and covert to data.table 
+ec_time <- as.data.table(ec)
+
+# create Hour column with half-hour resolution
+ec_time[, Hour := hour(datetime) + ifelse(minute(datetime) == 30, 0.5, 0)]
+ec_time[hour(datetime) == 0 & minute(datetime) == 0, Hour := 24.0]
+
+#ec_time[, Hour := seq(0.5, 24, by = 0.5), by = datetime]
+#ec_time[Hour == 24.0, Date := as.Date(datetime) - 1]
+#ec_time[is.na(Date), Date := as.Date(datetime)]  
+
+# add new hour column to ec
+ec <- merge(ec, ec_time[, .(datetime, Hour)], by = "datetime")
+
 # create data with variables needed for ReddyProc partitioning
-ec2 = ec[c("year","doy", "datetime", "FC", "LE","H","SW_IN_1_1_1", "TA_1_1_1","TS_1_1_1", "RH", "VPD_PI", "USTAR")]
+ec2 = ec[c("year","doy", "Hour", "FC", "LE","H","SW_IN_1_1_1", "TA_1_1_2","ts_mean", "RH", "VPD_PI", "USTAR")]
 
 # save file in ReddyProc format for online tool in R
 write.csv(ec2, "ONAQ_needs_partitioning.csv", row.names = FALSE)
