@@ -31,6 +31,7 @@ ggplot(reddy.in, aes(DoY, NEE))+geom_line()
 ggplot(reddy.in, aes(DoY, LE))+geom_line()
 ggplot(reddy.in, aes(DoY, H))+geom_line()
 ggplot(reddy.in, aes(DoY, Tair))+geom_line()
+ggplot(reddy.in, aes(DoY, Tsoil))+geom_line()
 ggplot(reddy.in, aes(DoY, rH))+geom_line()
 ggplot(reddy.in, aes(DoY, VPD))+geom_line()
 ggplot(reddy.in, aes(DoY, Ustar))+geom_line()
@@ -43,9 +44,9 @@ saveyear <- function(data,startyear,endyear) {
     # subset each year
     data1 <- subset(data, Year==i)
     
-    data1 <- data1 %>% select(Year,DoY,Hour,NEE, LE, H, Rg, Tair, rH, VPD, Ustar)
+    data1 <- data1 %>% select(Year,DoY,Hour,NEE, LE, H, Rg, Tair, Tsoil, rH, VPD, Ustar)
     
-    data.units <- c("-","-","-","umolm-2s-1", "Wm-2","Wm-2","Wm-2","degC","%","hPa","ms-1")
+    data.units <- c("-","-","-","umolm-2s-1", "Wm-2","Wm-2","Wm-2","degC","degC","%","hPa","ms-1")
     t
     data.final <- rbind(data.units,data1)
     
