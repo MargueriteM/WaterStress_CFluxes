@@ -6,11 +6,13 @@ library(ggplot2)
 library(cowplot)
 library(viridis)
 
+setwd("C:/Users/mebeckage/OneDrive - The University of Texas at El Paso/Mauritz Lab - ONAQ_Data")
+
 # import
-rp.units <- (fread("./REddyResults_xSR_20240323_587474645/output.txt",
+rp.units <- (fread("./REddyResults_ONAQ_2024_20250625_942226779/output.txt",
                    header=TRUE))[1,]
 
-flux.rp <- fread("./REddyResults_xSR_20240323_587474645/output.txt",
+flux.rp <- fread("./REddyResults_ONAQ_2024_20250625_942226779/output.txt",
                  header=FALSE, skip=2,na.strings=c("-9999", "NA","-"),
                  col.names = colnames(rp.units))
 
@@ -28,18 +30,21 @@ fig_nee <- ggplot(subset(flux.rp), aes(DoY,NEE_orig))+
   geom_point(size=0.4)+
   geom_point(aes(y=NEE_U50_f),data=subset(flux.rp, is.na(NEE_orig)),colour="red",size=0.25)+
   facet_grid(.~Year)
+fig_nee
 
 # graph Ustar filtered NEE with 50th percentile and gap-filled
 fig_nee_fill <- ggplot((flux.rp))+
   geom_line(aes(DoY,NEE_U50_f))+
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank())
+fig_nee_fill
 
 # graph Ustar filtered Reco with 50th percentile and gap-filled
 fig_reco <- ggplot(subset(flux.rp), aes(DoY,Reco_U50))+geom_line()+
   geom_line(aes(y=Reco_DT_U50),colour="blue")+
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank())
+fig_reco
 
 # plot daytime Reco with qc code (not sure what to do with this code: exlude 1?)
 ggplot(subset(flux.rp), aes(DoY,Reco_DT_U50, colour=factor(FP_qc)))+
@@ -51,9 +56,12 @@ fig_gpp <- ggplot(flux.rp, aes(DoY,GPP_U50_f))+
   geom_line(aes(y=GPP_DT_U50),colour="blue")+
   theme(axis.title.x = element_blank(),
         axis.text.x = element_blank())
+fig_gpp
+
 
 fig_le <- ggplot((flux.rp))+
   geom_line(aes(DoY,LE_f))
+fig_le
 
 plot_grid(fig_nee_fill, fig_reco, fig_gpp, fig_le, nrow=4, align="v")
 
