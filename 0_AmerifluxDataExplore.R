@@ -10,6 +10,16 @@ ec <- read_csv("AMF_US-xNQ_BASE_HH_10-5.csv",
                col_types = "cc",
                na = c("-9999", "NA")) 
 
+# create a list of names to later subset biomet variables
+# first, see all column names
+colnames (ec)
+
+# pick all the variables from TA_1_1_1 onward
+biometvars <- list(colnames(ec[,76:186]))
+
+# see which variables were selected
+biometvars
+
 # Convert timestamps to POSIXct format
 # SHOULD WE USE TIMESTAMP START or END????
 ec <- ec %>% 
@@ -18,6 +28,8 @@ ec <- ec %>%
          month=month(datetime),
          doy=yday(datetime))
  
+# select datetime column and all columns selected in biomet vars
+biomet <- ec %>% select(c(datetime,biometvars[[1]]))
 
 # graph timeseries of NEE (FC) 
 ggplot(ec, aes(doy, FC))+
