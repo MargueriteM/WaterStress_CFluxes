@@ -9,6 +9,7 @@ library(dplyr)
 library(bigleaf)
 library(tidyr)
 library(scales)
+library(patchwork)
 
 setwd("C:/Users/mebeckage/OneDrive - The University of Texas at El Paso/Mauritz Lab - ONAQ_Data")
 
@@ -54,7 +55,7 @@ biomet <- biomet%>%
 flux.biomet <- left_join(flux.rp, biomet, by=c("Year", "DoY", "Hour"))
 
 # plot with no U* filter or gapfill
-ggplot(flux.rp, ases(DoY,NEE_orig))+
+ggplot(flux.rp, aes(DoY,NEE_orig))+
   geom_line()+
   facet_grid(Year~.)
 
@@ -440,4 +441,75 @@ daily_biomet_means <- flux.biomet %>%
     na.rm = TRUE
   ))
 
+
+##############################################################################
+
+flux.rp <- flux.rp %>%
+  mutate(ET_mm = ET * 1800)  # ET in mm per half hour
+
+
+
+
+# daily ET
+et_daily <- flux.rp %>% 
+  group_by(Year, DoY) %>% 
+  summarise(et = sum(ET_mm, na.rm = TRUE))
+
+# daily precipitation
+precip_daily <- flux.biomet %>% 
+  group_by(Year, DoY) %>% 
+  summarise(precipitation = sum(P_1_1_1, na.rm = TRUE))
+
+combined_daily <- left_join(et_daily, precip_daily, by = c("Year", "DoY"))
+
+
+combined_long <- combined_daily %>%
+  pivot_longer(cols = c(et, precipitation),
+               names_to = "Variable",
+               values_to = "Value")
+
+
+# ET plot
+p_et <- ggplot(et_daily, aes(x = DoY, y = et)) +
+  geom_line(color = "forestgreen", size = 0.8) +
+  facet_wrap(~ Year, scales = "free_y") +
+  labs(title = "Daily ET", x = "Day of Year", y = "ET (mm)") +
+  theme_minimal()
+p_et
+
+# Precip plot
+p_precip <- ggplot(precip_daily, aes(x = DoY, y = precipitation)) +
+  geom_col(fill = "steelblue", alpha = 0.6) +
+  facet_wrap(~ Year, scales = "free_y") +
+  labs(title = "Daily precipitation", x = "Day of Year", y = "Precipitation (mm)") +
+  theme_minimal()
+
+
+p_precip / p_et
+
+
+# annual cumulative ET
+annual_et_cum <- et_daily %>%
+  group_by(Year) %>%
+  summarise(cumulative_et = sum(et, na.rm = TRUE))
+annual_et_cum
+
+# annual cumulative precipitation
+annual_precip_cum <- precip_daily %>%
+  group_by(Year) %>%
+  summarise(cumulative_precip = sum(precipitation, na.rm = TRUE))
+annual_precip_cum
+
+
+et_daily %>%
+  group_by(Year) %>%
+  arrange(DoY) %>%
+  mutate(cumulative_et = cumsum(et)) %>%
+  ggplot(aes(x = DoY, y = cumulative_et)) +
+  geom_line(color = "forestgreen") +
+  facet_wrap(~ Year) +
+  labs(title = "Cumulative annual ET",
+       x = "Day of Year",
+       y = "Cumulative ET (mm)") +
+  theme_minimal()
 
