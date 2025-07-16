@@ -54,23 +54,51 @@ biomet <- biomet%>%
 # merge flux data with biomet data
 flux.biomet <- left_join(flux.rp, biomet, by=c("Year", "DoY", "Hour"))
 
+###################################################################
+# create a copy of the original GPP_DT_U50 column for filtered GPP
+# and add to flux.rp
+flux.rp[, GPP_DT_filtered := GPP_DT_U50]
+
+# drop the uncertain daytime GPP values in filtered column
+flux.rp[Year == 2019 & DoY >= 31 & DoY <= 56, GPP_DT_filtered := NA]
+flux.rp[Year == 2019 & DoY >= 178 & DoY <= 216, GPP_DT_filtered := NA]
+flux.rp[Year == 2019 & DoY >= 303 & DoY <= 333, GPP_DT_filtered := NA]
+flux.rp[Year == 2020 & DoY >= 201 & DoY <= 260, GPP_DT_filtered := NA]
+
+# plot original GPP
+p1 <- ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
+  geom_point(size=1)+
+  facet_grid(.~Year) + 
+  ylim(c(ymin = -100, ymax = 100))
+p1
+
+# plot filtered GPP
+p2 <- ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_DT_filtered, colour=factor(FP_qc)))+
+  geom_point(size=1)+
+  facet_grid(.~Year) + 
+  ylim(c(ymin = -100, ymax = 100))
+p2
+
+# stack  graphs vertically to compare
+p1 / p2
+###################################################################
+
+
 # plot with no U* filter or gapfill
 ggplot(flux.rp, aes(DoY,NEE_orig))+
   geom_line()+
   facet_grid(Year~.)
 
-###################################################################
-# drop the daytime GPP data from flux.rp where it is uncertain
-flux.rp[Year==2019 & DoY >= 31 & DoY <= 56, GPP_DT_U50 := NA]
-flux.rp[Year==2019 & DoY >= 178 & DoY <= 216, GPP_DT_U50 := NA]
-flux.rp[Year==2019 & DoY >= 303 & DoY <= 333, GPP_DT_U50 := NA]
-flux.rp[Year==2020 & DoY >= 201 & DoY <= 260, GPP_DT_U50 := NA]
-###################################################################
 
 ###################################################################
 # convert LE to ET using bigleaf
 flux.rp <- flux.rp %>%
   mutate(ET = LE.to.ET(LE_f, Tair_f))
+
+# convert ET to correct units, mm per half hour. 
+# create new ET_mm column with these units and add to flux.rp
+flux.rp <- flux.rp %>%
+  mutate(ET_mm = ET * 1800) 
 ###################################################################
 
 
@@ -105,11 +133,19 @@ fig_tair <- ggplot((flux.biomet))+
   facet_grid(.~Year)
 fig_tair
 
+# plot le
+fig_le <- ggplot((flux.rp))+
+  geom_line(aes(DoY,LE_f)) +
+  facet_grid(.~Year)
+fig_le
 
+
+plot_grid(fig_nee_fill, fig_reco, fig_gpp, fig_le, nrow=4, align="v")
 plot_grid(fig_nee_fill, fig_precip, nrow=2, align="v")
 plot_grid(fig_nee_fill, fig_tair, nrow=2, align="v")
 plot_grid(fig_nee_fill, fig_precip, fig_tair, nrow=3, align="v")
 
+###################################################################
 # look closer at NEE by month
 # graph Ustar filtered NEE with 50th percentile and gap-filled
 fig_2019data <- flux.rp %>% 
@@ -151,6 +187,7 @@ fig_2019data <- flux.rp %>%
   facet_grid(.~Year)
   fig_2020data_LE
   
+  # look at radiation by year/month
   flux.biomet %>% 
    # filter(Year==2019) %>%
    # filter (DoY > 212) %>%
@@ -160,27 +197,13 @@ fig_2019data <- flux.rp %>%
   facet_grid(.~Year)
   
   plot_grid(fig_2019data, fig_precip2019, nrow=2, align="v")
-  
-fig_2020data <- flux.rp %>% 
-    filter(Year==2020) %>%
-    filter (DoY < 152) %>% # & DoY < 200) %>%
-    ggplot(.)+
-    geom_line(aes(DoY + Hour/24,NEE_U50_f))+
-    geom_point(aes(DoY + Hour/24,NEE_U50_f))
-  facet_grid(.~Year)
-  
-  fig_precip2020 <- flux.biomet %>% 
-    filter(Year==2019) %>%
-    filter (DoY < 152) %>%
-    ggplot(.)+
-    geom_line(aes(DoY + Hour/24,P_1_1_1))+
-    geom_point(aes(DoY + Hour/24,P_1_1_1))
-  facet_grid(.~Year)
-  
+ 
   plot_grid(fig_2020data, fig_precip2020, nrow=2, align="v")
   
   plot_grid(fig_2019data, fig_2020data, nrow=2, align="v")
   
+  
+  # look at precipitation by year/month
   flux.biomet %>% 
    # filter(Year==2021) %>%
    # filter (DoY > 190 & DoY < 200) %>%
@@ -188,7 +211,7 @@ fig_2020data <- flux.rp %>%
     geom_line(aes(DoY + Hour/24,P_1_1_1))+
     geom_point(aes(DoY + Hour/24,P_1_1_1))
     facet_grid(.~Year)
-  
+############################################################ 
 
 # graph Ustar filtered Reco with 50th percentile and gap-filled
 fig_reco <- ggplot(subset(flux.rp), aes(DoY,Reco_U50, colour = "nightime"))+geom_line()+
@@ -204,7 +227,7 @@ ggplot(subset(flux.rp), aes(DoY,Reco_DT_U50, colour=factor(FP_qc)))+
   geom_point(size=1)+
   facet_grid(.~Year)
 
-# plot 2019 daytime Reco 
+# plot 2020 daytime Reco 
 ggplot(subset(flux.rp, Year == 2020 & FP_qc == 0), aes(DoY, Reco_DT_U50, colour=factor(FP_qc))) +
   geom_point(size=1) +
   facet_grid(. ~ Year)
@@ -241,10 +264,7 @@ ggplot(subset(flux.rp), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
   facet_grid(.~Year) + 
   ylim(c(ymin = -100, ymax = 100))
 
-# GPP Daytime 50th percentile with various uncertin data removed 
-
-# Day time GPP with 2s removed
-
+# look at daytime GPP by month/year
 flux.rp %>% 
   # filter(Year==2020) %>%
   #filter (DoY > 338 & DoY < 365) %>%
@@ -252,9 +272,9 @@ flux.rp %>%
   ggplot(., aes(DoY + Hour/24,GPP_DT_U50, colour=factor(FP_qc)))+
   geom_line(size=1)+
   facet_grid(.~Year) 
-  j#ylim(c(ymin = -2, ymax = 2))
+  #ylim(c(ymin = -2, ymax = 2))
 
-
+# look at air temperature by month/year
 flux.rp %>% 
   #filter(Year==2019) %>%
  # filter (DoY > 178 & DoY < 196) %>%
@@ -263,24 +283,36 @@ flux.rp %>%
   geom_line(size=1)+
   facet_grid(.~Year) 
 #ylim(c(ymin = -1, ymax = 8))
+
+
 ###########################
-
-
-
 # Day time GPP with 1s and 2s removed
 ggplot(subset(flux.rp,FP_qc == 0), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
   geom_point(size=1)+
   facet_grid(.~Year) + 
   ylim(c(ymin = -100, ymax = 100))
 
-# Night time GPP with 2s removed
+# daytime GPP with 2s removed
+ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
+  geom_point(size=1)+
+  facet_grid(.~Year) + 
+  ylim(c(ymin = -100, ymax = 100))
+
+# night time GPP with 1s and 2s removed
+ggplot(subset(flux.rp,FP_qc == 0), aes(DoY,GPP_U50_f, colour=factor(FP_qc)))+
+  geom_point(size=1)+
+  facet_grid(.~Year) + 
+  ylim(c(ymin = -100, ymax = 100))
+
+# night time GPP with 2s removed
 ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_U50_f, colour=factor(FP_qc)))+
   geom_point(size=1)+
   facet_grid(.~Year) + 
   ylim(c(ymin = -100, ymax = 100))
-####################################
+####################################\
 
-# Night time GPP with 2s removed
+
+# look through GPP with year/month
 flux.rp %>% 
   filter(Year==2019) %>%
   filter (DoY > 200 & DoY < 220) %>%
@@ -289,14 +321,6 @@ flux.rp %>%
   geom_point(size=1)+
   facet_grid(.~Year) 
 #ylim(c(ymin = -2, ymax = 2))
-#####################
-
-fig_le <- ggplot((flux.rp))+
-  geom_line(aes(DoY,LE_f)) +
-  facet_grid(.~Year)
-fig_le
-
-plot_grid(fig_nee_fill, fig_reco, fig_gpp, fig_le, nrow=4, align="v")
 
 
 
@@ -365,7 +389,7 @@ gpp_daily <- flux.rp %>%
   group_by(Year,DoY) %>% 
   summarise(GPP_DT = sum(GPP_DT_U50),GPP_NT = sum(GPP_U50_f))
 
-#plot daily sum
+#plot daily sum of GPP daytime and GPP nighttime
 ggplot(gpp_daily, aes(x = DoY)) +
   geom_point(aes(y = GPP_DT, color = "GPP_DT")) +
   geom_point(aes(y = GPP_NT, color = "GPP_NT")) +
@@ -385,51 +409,6 @@ ggplot(gpp_long, aes(x = DoY, y = DailySum, color = Type)) +
   theme_minimal()
 
 
-# daily sum of ET
-et_daily <- flux.rp %>% 
-  group_by(Year,DoY) %>% 
-  summarise(et = sum(ET))
-
-# plot daily sum of ET
-et_daily <- et_daily %>%
-  mutate(Date = as.Date(DoY - 1, origin = paste0(Year, "-01-01")))
-
-ggplot(et_daily, aes(x = DoY, y = et)) +
-  geom_line(color = "blue") +
-  labs(title = "Daily sum of ET by year",
-       x = "Day of Year",
-       y = "Daily ET sum") +
-  facet_wrap(~ Year) +
-  theme_minimal()
-
-
-
-
-# daily sum of precip
-precip_daily <- flux.biomet %>% 
-  group_by(Year,DoY) %>% 
-  summarise(precipitation = sum(P_1_1_1))
-
-# plot as precip 
-
-precip_daily <- precip_daily %>%
-  mutate(Date = as.Date(DoY - 1, origin = paste0(Year, "-01-01")))
-
-ggplot(precip_daily, aes(x = Date, y = precipitation)) +
-  geom_col(fill = "steelblue") +
-  labs(title = "Daily precipitation",
-       x = "Date",
-       y = "Precipitation (mm)") +
-  theme_minimal()
-
-ggplot(precip_daily, aes(x = Date, y = precipitation)) +
-  geom_line(color = "blue") +
-  labs(title = "Daily precipitation",
-       x = "Date",
-       y = "Precipitation (mm)") +
-  theme_minimal()
-
-
 # daily mean for all other biomet variables 
 # (single variables, ie: 1_1_1, 1_2_1, etc)
 
@@ -441,15 +420,6 @@ daily_biomet_means <- flux.biomet %>%
     na.rm = TRUE
   ))
 
-
-##############################################################################
-
-flux.rp <- flux.rp %>%
-  mutate(ET_mm = ET * 1800)  # ET in mm per half hour
-
-
-
-
 # daily ET
 et_daily <- flux.rp %>% 
   group_by(Year, DoY) %>% 
@@ -460,16 +430,17 @@ precip_daily <- flux.biomet %>%
   group_by(Year, DoY) %>% 
   summarise(precipitation = sum(P_1_1_1, na.rm = TRUE))
 
+# combine et and precip for plotting
 combined_daily <- left_join(et_daily, precip_daily, by = c("Year", "DoY"))
 
-
+# convert to logng format
 combined_long <- combined_daily %>%
   pivot_longer(cols = c(et, precipitation),
                names_to = "Variable",
                values_to = "Value")
 
 
-# ET plot
+# plot daily et
 p_et <- ggplot(et_daily, aes(x = DoY, y = et)) +
   geom_line(color = "forestgreen", size = 0.8) +
   facet_wrap(~ Year, scales = "free_y") +
@@ -477,30 +448,30 @@ p_et <- ggplot(et_daily, aes(x = DoY, y = et)) +
   theme_minimal()
 p_et
 
-# Precip plot
+# plot daily precip
 p_precip <- ggplot(precip_daily, aes(x = DoY, y = precipitation)) +
   geom_col(fill = "steelblue", alpha = 0.6) +
   facet_wrap(~ Year, scales = "free_y") +
   labs(title = "Daily precipitation", x = "Day of Year", y = "Precipitation (mm)") +
   theme_minimal()
 
-
+# stack precip and et graphs to compare by day of year
 p_precip / p_et
 
 
-# annual cumulative ET
+# calculate annual cumulative ET
 annual_et_cum <- et_daily %>%
   group_by(Year) %>%
   summarise(cumulative_et = sum(et, na.rm = TRUE))
 annual_et_cum
 
-# annual cumulative precipitation
+# calculate annual cumulative precipitation
 annual_precip_cum <- precip_daily %>%
   group_by(Year) %>%
   summarise(cumulative_precip = sum(precipitation, na.rm = TRUE))
 annual_precip_cum
 
-
+# graph annual cumulative ET
 et_daily %>%
   group_by(Year) %>%
   arrange(DoY) %>%
