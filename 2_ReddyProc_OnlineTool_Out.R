@@ -62,8 +62,11 @@ flux.rp[, GPP_DT_filtered := GPP_DT_U50]
 # drop the uncertain daytime GPP values in filtered column
 flux.rp[Year == 2019 & DoY >= 31 & DoY <= 56, GPP_DT_filtered := NA]
 flux.rp[Year == 2019 & DoY >= 178 & DoY <= 216, GPP_DT_filtered := NA]
+flux.rp[Year == 2019 & DoY >= 300, GPP_DT_filtered := NA]
+flux.rp[Year == 2019 & DoY <= 50, GPP_DT_filtered := NA]
 flux.rp[Year == 2019 & DoY >= 303 & DoY <= 333, GPP_DT_filtered := NA]
 flux.rp[Year == 2020 & DoY >= 201 & DoY <= 260, GPP_DT_filtered := NA]
+flux.rp[Year == 2020 & DoY >= 200 & DoY <= 300, GPP_DT_filtered := NA]
 
 # plot original GPP
 p1 <- ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
@@ -387,7 +390,7 @@ ggplot(flux.rp,
 #daily sum of GPP DT, GPP NT
 gpp_daily <- flux.rp %>% 
   group_by(Year,DoY) %>% 
-  summarise(GPP_DT = sum(GPP_DT_U50),GPP_NT = sum(GPP_U50_f))
+  summarise(GPP_DT = sum(GPP_DT_filtered),GPP_NT = sum(GPP_U50_f))
 
 #plot daily sum of GPP daytime and GPP nighttime
 ggplot(gpp_daily, aes(x = DoY)) +
@@ -455,8 +458,15 @@ p_precip <- ggplot(precip_daily, aes(x = DoY, y = precipitation)) +
   labs(title = "Daily precipitation", x = "Day of Year", y = "Precipitation (mm)") +
   theme_minimal()
 
+# plot daily filtered GPP
+p_gpp <- ggplot(gpp_daily, aes(x = DoY, y = GPP_DT)) +
+  geom_line(color = "darkorange", size = 0.8) +
+  facet_wrap(~ Year, scales = "free_y") +
+  labs(title = "Daily GPP (Daytime)", x = "Day of Year", y = "GPP_DT") +
+  theme_minimal()
+
 # stack precip and et graphs to compare by day of year
-p_precip / p_et
+p_precip / p_et / p_gpp
 
 
 # calculate annual cumulative ET
@@ -471,6 +481,7 @@ annual_precip_cum <- precip_daily %>%
   summarise(cumulative_precip = sum(precipitation, na.rm = TRUE))
 annual_precip_cum
 
+
 # graph annual cumulative ET
 et_daily %>%
   group_by(Year) %>%
@@ -482,5 +493,18 @@ et_daily %>%
   labs(title = "Cumulative annual ET",
        x = "Day of Year",
        y = "Cumulative ET (mm)") +
+  theme_minimal()
+
+# graph annual cumulative GPP filtered
+gpp_daily %>%
+  group_by(Year) %>%
+  arrange(DoY) %>%
+  mutate(cumulative_gpp = cumsum(GPP_DT)) %>%
+  ggplot(aes(x = DoY, y = cumulative_gpp)) +
+  geom_line(color = "forestgreen") +
+  facet_wrap(~ Year) +
+  labs(title = "Cumulative annual GPP DT Filtered",
+       x = "Day of Year",
+       y = "Cumulative DT GPP") +
   theme_minimal()
 
