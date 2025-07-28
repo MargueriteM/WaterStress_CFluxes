@@ -57,6 +57,10 @@ flux.biomet <- left_join(flux.rp, biomet, by=c("Year", "DoY", "Hour"))
 ###################################################################
 # create a copy of the original GPP_DT_U50 column for filtered GPP
 # and add to flux.rp
+
+## MM suggest ##
+# do this in flux.biomet instead of flux.rp. That way you keep youe flux and biomet data together. 
+
 flux.rp[, GPP_DT_filtered := GPP_DT_U50]
 
 # drop the uncertain daytime GPP values in filtered column
@@ -94,6 +98,9 @@ ggplot(flux.rp, aes(DoY,NEE_orig))+
 
 
 ###################################################################
+## MM suggest ##
+# Do this in flux.biomet to keep all together
+
 # convert LE to ET using bigleaf
 flux.rp <- flux.rp %>%
   mutate(ET = LE.to.ET(LE_f, Tair_f))
@@ -226,6 +233,8 @@ fig_reco
 
 
 # plot daytime Reco with qc code (not sure what to do with this code: exlude 1?)
+## MM suggest ##
+# Yes! For DT Reco, apply the same filtering logic as for GPP. Exclude filter == 2
 ggplot(subset(flux.rp), aes(DoY,Reco_DT_U50, colour=factor(FP_qc)))+
   geom_point(size=1)+
   facet_grid(.~Year)
@@ -397,6 +406,20 @@ ggplot(flux.rp,
     panel.background=element_rect(fill="white"))
 
 #######################################################
+
+## MM suggest ##
+# calculate all the daily in a single data frame, it will be fewer objects to keep track of:
+# eg: 
+
+# flux.daily <- flux.biomet %>%
+# group_by(Year,DoY) %>% 
+#   summarise(GPP_DT = sum(GPP_DT_filtered),
+#             GPP_NT = sum(GPP_U50_f), 
+#             Reco_DT = sum(),
+#             Reco_NT = sum(),
+#             et = sum())
+
+
 #daily sum of GPP DT, GPP NT
 gpp_daily <- flux.rp %>% 
   group_by(Year,DoY) %>% 
