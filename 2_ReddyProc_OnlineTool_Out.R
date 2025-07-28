@@ -64,22 +64,22 @@ flux.rp[Year == 2019 & DoY >= 31 & DoY <= 56, GPP_DT_filtered := NA]
 flux.rp[Year == 2019 & DoY >= 178 & DoY <= 216, GPP_DT_filtered := NA]
 flux.rp[Year == 2019 & DoY >= 300, GPP_DT_filtered := NA]
 flux.rp[Year == 2019 & DoY <= 50, GPP_DT_filtered := NA]
-flux.rp[Year == 2019 & DoY >= 303 & DoY <= 333, GPP_DT_filtered := NA]
 flux.rp[Year == 2020 & DoY >= 201 & DoY <= 260, GPP_DT_filtered := NA]
 flux.rp[Year == 2020 & DoY >= 200 & DoY <= 300, GPP_DT_filtered := NA]
+flux.rp[FP_qc == 2, GPP_DT_filtered := NA]
 
 # plot original GPP
 p1 <- ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
   geom_point(size=1)+
   facet_grid(.~Year) + 
-  ylim(c(ymin = -100, ymax = 100))
+  ylim(c(ymin = -25, ymax = 25))
 p1
 
 # plot filtered GPP
 p2 <- ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_DT_filtered, colour=factor(FP_qc)))+
   geom_point(size=1)+
   facet_grid(.~Year) + 
-  ylim(c(ymin = -100, ymax = 100))
+  ylim(c(ymin = -25, ymax = 25))
 p2
 
 # stack  graphs vertically to compare
@@ -269,10 +269,10 @@ ggplot(subset(flux.rp), aes(DoY,GPP_DT_U50, colour=factor(FP_qc)))+
 
 # look at daytime GPP by month/year
 flux.rp %>% 
-  # filter(Year==2020) %>%
-  #filter (DoY > 338 & DoY < 365) %>%
+   filter(Year==2019) %>%
+  filter (DoY > 200 & DoY < 300) %>%
    filter (FP_qc !=2) %>%
-  ggplot(., aes(DoY + Hour/24,GPP_DT_U50, colour=factor(FP_qc)))+
+  ggplot(., aes(DoY + Hour/24,GPP_DT_filtered, colour=factor(FP_qc)))+
   geom_line(size=1)+
   facet_grid(.~Year) 
   #ylim(c(ymin = -2, ymax = 2))
@@ -317,9 +317,19 @@ ggplot(subset(flux.rp,FP_qc != 2), aes(DoY,GPP_U50_f, colour=factor(FP_qc)))+
 
 # look through GPP with year/month
 flux.rp %>% 
+ # filter(Year==2019) %>%
+ # filter (DoY > 200 & DoY < 230) %>%
+  ggplot(., aes(DoY + Hour/24,NEE_U50_f))+
+  geom_line(size=1)+
+  geom_point(size=1)+
+  facet_grid(.~Year) 
+#ylim(c(ymin = -2, ymax = 2))
+
+
+biomet %>% 
   filter(Year==2019) %>%
-  filter (DoY > 200 & DoY < 220) %>%
-  ggplot(., aes(DoY + Hour/24,GPP_U50_f))+
+ # filter (DoY > 200 & DoY < 230) %>%
+  ggplot(., aes(DoY + Hour/24, P_1_1_1))+
   geom_line(size=1)+
   geom_point(size=1)+
   facet_grid(.~Year) 
@@ -399,17 +409,8 @@ ggplot(gpp_daily, aes(x = DoY)) +
   labs(title = "Daily sum of GPP DT and GPP NT",
        y = "Daily sum",
        color = "Variable") +
-  theme_minimal()
-
-#plot points
-gpp_long <- gpp_daily %>%
-  pivot_longer(cols = c(GPP_DT, GPP_NT), names_to = "Type", values_to = "DailySum")
-
-ggplot(gpp_long, aes(x = DoY, y = DailySum, color = Type)) +
-  geom_line() +
-  labs(title = "Daily sum of GPP DT and GPP NT",
-       y = "Daily sum") +
-  theme_minimal()
+  theme_minimal() +
+  facet_grid(Year~.)
 
 
 # daily mean for all other biomet variables 
@@ -422,6 +423,11 @@ daily_biomet_means <- flux.biomet %>%
     .fns = mean,
     na.rm = TRUE
   ))
+
+# daily Reco 
+reco_daily <- flux.rp %>% 
+  group_by(Year, DoY) %>% 
+  summarise(Reco_DT = sum(Reco_DT),Reco_NT = sum(Reco_U50))
 
 # daily ET
 et_daily <- flux.rp %>% 
@@ -459,14 +465,38 @@ p_precip <- ggplot(precip_daily, aes(x = DoY, y = precipitation)) +
   theme_minimal()
 
 # plot daily filtered GPP
-p_gpp <- ggplot(gpp_daily, aes(x = DoY, y = GPP_DT)) +
+p_gpp_dt <- ggplot(gpp_daily, aes(x = DoY, y = GPP_DT)) +
   geom_line(color = "darkorange", size = 0.8) +
   facet_wrap(~ Year, scales = "free_y") +
   labs(title = "Daily GPP (Daytime)", x = "Day of Year", y = "GPP_DT") +
   theme_minimal()
 
+# plot daily filtered GPP daytime and nighttime
+p_gpp_nt_dt <- ggplot(gpp_daily, aes(x = DoY)) +
+  geom_line(aes(y = GPP_DT), color = "darkorange", size = 0.8) +
+  geom_line(aes(y = GPP_NT), color = "purple", size = 0.8) +
+  facet_wrap(~ Year, scales = "free_y") +
+  labs(title = "Daily GPP Daytime and Night time", x = "Day of Year", y = "GPP") +
+  theme_minimal()
+
+# plot daily nighttime filtered GPP
+p_gpp_nt <- ggplot(gpp_daily, aes(x = DoY, y = GPP_NT)) +
+  geom_line(color = "purple", size = 0.8) +
+  facet_wrap(~ Year, scales = "free_y") +
+  labs(title = "Daily GPP (Nighttime)", x = "Day of Year", y = "GPP_NT") +
+  theme_minimal()
+
+# plot daily reco 
+p_reco <- ggplot(reco_daily, aes(x = DoY)) +
+  geom_line(aes(y = Reco_DT), color = "darkorange", size = 0.8) +
+  geom_line(aes(y = Reco_NT), color = "purple", size = 0.8) +
+  facet_wrap(~ Year, scales = "free_y") +
+  labs(title = "Daily Reco Daytime and Night time", x = "Day of Year", y = "Reco") +
+  theme_minimal()
+
+
 # stack precip and et graphs to compare by day of year
-p_precip / p_et / p_gpp
+p_precip / p_et / p_gpp_nt_dt/ p_reco
 
 
 # calculate annual cumulative ET
