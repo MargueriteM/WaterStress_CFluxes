@@ -33,11 +33,11 @@ flux <- left_join(flux, et_daily, by = c("Year", "DoY"))
 # Extract the desired columns into a new dataframe called "flux_daily"
 flux_daily <- flux[, c("Year", "DoY", "ET", "NEE", "GPP_U50_f", "GPP_DT_U05", "Reco_U50", "Reco_DT_U05")]
 
-flux$NEE <- flux$NEE * (1800 * 1 * 10^-6 * 12.01)
-flux$GPP_U50_f <- flux$GPP_U50_f * (1800 * 1 * 10^-6 * 12.01)
-flux$GPP_DT_U05 <- flux$GPP_DT_U05 * (1800 * 1 * 10^-6 * 12.01)
-flux$Reco_U50 <- flux$Reco_U50 * (1800 * 1 * 10^-6 * 12.01)
-flux$Reco_DT_U05 <- flux$Reco_DT_U05 * (1800 * 1 * 10^-6 * 12.01)
+flux$NEE <- flux$NEE * (1800)
+flux$GPP_U50_f <- flux$GPP_U50_f * (1800)
+flux$GPP_DT_U05 <- flux$GPP_DT_U05 * (1800)
+flux$Reco_U50 <- flux$Reco_U50 * (1800)
+flux$Reco_DT_U05 <- flux$Reco_DT_U05 * (1800)
 
 
 
